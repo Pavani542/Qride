@@ -32,7 +32,7 @@
       [
         "expo-router",
         {
-          "origin": "https://${SUBDOMAIN}.dev.kiki.dev"
+          "origin": "https://project-a9dff482.dev.kiki.dev"
         }
       ],
       [
@@ -45,7 +45,8 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
