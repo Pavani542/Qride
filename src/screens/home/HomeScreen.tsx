@@ -28,6 +28,11 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('RideEstimate', { destination: location });
   };
 
+  const handleRideHistory = () => {
+    // Navigate to the History tab
+    navigation.navigate('History');
+  };
+
   const getUserName = () => {
     if (user?.firstName) {
       return user.firstName;
@@ -108,7 +113,7 @@ export default function HomeScreen({ navigation }: any) {
             
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => navigation.navigate('History')}
+              onPress={handleRideHistory}
             >
               <View style={styles.actionIcon}>
                 <Ionicons name="receipt" size={24} color={Colors.accent} />

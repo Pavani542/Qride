@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import {
   View,
@@ -8,12 +7,14 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@clerk/clerk-expo';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen({ navigation }: any) {
+  const { isSignedIn, isLoaded } = useAuth();
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.5);
 
@@ -33,13 +34,22 @@ export default function SplashScreen({ navigation }: any) {
       }),
     ]).start();
 
-    // Navigate to onboarding after 2.5 seconds
+    // Check auth state after animations
     const timer = setTimeout(() => {
-      navigation.replace('Onboarding');
+      if (isLoaded) {
+        if (isSignedIn) {
+          // User is signed in, but we don't navigate manually
+          // The AppNavigator will handle this automatically
+          return;
+        } else {
+          // User is not signed in, navigate to onboarding
+          navigation.replace('Onboarding');
+        }
+      }
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   return (
     <View style={styles.container}>

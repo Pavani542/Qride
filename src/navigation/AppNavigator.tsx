@@ -107,14 +107,14 @@ function MainNavigator() {
   return (
     <Stack.Navigator
       id={undefined}
-      initialRouteName="Main"
+      initialRouteName="TabNavigator"
       screenOptions={{
         headerShown: false,
         gestureEnabled: true,
       }}
     >
-      {/* Main App */}
-      <Stack.Screen name="Main" component={TabNavigator} />
+      {/* Main App with Tabs */}
+      <Stack.Screen name="TabNavigator" component={TabNavigator} />
       
       {/* Home Flow */}
       <Stack.Screen name="LocationSearch" component={LocationSearchScreen} />
@@ -136,8 +136,9 @@ function MainNavigator() {
 export default function AppNavigator() {
   const { isSignedIn, isLoaded } = useAuth();
 
+  // Show loading screen while checking auth state
   if (!isLoaded) {
-    return null; // or a loading screen
+    return null; // or a loading screen component
   }
 
   return (

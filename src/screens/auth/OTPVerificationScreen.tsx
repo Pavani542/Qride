@@ -79,7 +79,7 @@ export default function OTPVerificationScreen({ navigation, route }: any) {
 
         if (completeSignIn?.status === 'complete') {
           await setSignInActive({ session: completeSignIn.createdSessionId });
-          navigation.replace('Main');
+          // Don't navigate manually - the auth state change will handle it
         }
       } else {
         // Sign up flow
@@ -89,6 +89,7 @@ export default function OTPVerificationScreen({ navigation, route }: any) {
 
         if (completeSignUp?.status === 'complete') {
           await setSignUpActive({ session: completeSignUp.createdSessionId });
+          // Navigate to profile setup for new users
           navigation.navigate('ProfileSetup');
         }
       }

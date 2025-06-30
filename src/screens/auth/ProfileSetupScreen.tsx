@@ -58,7 +58,8 @@ export default function ProfileSetupScreen({ navigation }: any) {
         await user?.createEmailAddress({ email: email.trim() });
       }
 
-      navigation.replace('Main');
+      // Don't navigate manually - the auth state will handle the transition
+      Alert.alert('Success', 'Profile updated successfully!');
     } catch (err: any) {
       console.error('Error updating profile:', err);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
@@ -68,7 +69,8 @@ export default function ProfileSetupScreen({ navigation }: any) {
   };
 
   const handleSkip = () => {
-    navigation.replace('Main');
+    // Don't navigate manually - the auth state will handle the transition
+    Alert.alert('Profile Setup', 'You can complete your profile later from the settings.');
   };
 
   return (
