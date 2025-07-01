@@ -32,6 +32,9 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import RideHistoryScreen from '../screens/profile/RideHistoryScreen';
 import WalletScreen from '../screens/profile/WalletScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import PersonalDetailsScreen from '../screens/profile/PersonalDetailsScreen';
+import AboutScreen from '../screens/profile/AboutScreen';
 
 // Support Screens
 import HelpSupportScreen from '../screens/support/HelpSupportScreen';
@@ -163,6 +166,9 @@ function MainNavigator() {
       
       {/* Profile Flow */}
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="PersonalDetails" component={PersonalDetailsScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
     </Stack.Navigator>
   );
 }

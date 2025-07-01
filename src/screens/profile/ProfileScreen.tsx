@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -13,15 +13,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
+import { useFocusEffect } from '@react-navigation/native';
 
 const profileOptions = [
   {
-    id: '1',
-    title: 'Edit Profile',
-    icon: 'person-outline',
-    screen: 'EditProfile',
+    id: '0',
+    title: 'Personal Details',
+    icon: 'person-circle-outline',
+    screen: 'PersonalDetails',
   },
-  
   {
     id: '2',
     title: 'Wallet & Payments',
@@ -34,7 +34,6 @@ const profileOptions = [
     icon: 'settings-outline',
     screen: 'Settings',
   },
- 
   {
     id: '4',
     title: 'About',
@@ -43,17 +42,45 @@ const profileOptions = [
   },
 ];
 
-export default function ProfileScreen({ navigation }: any) {
+export default function ProfileScreen({ navigation, route }: any) {
   const { signOut } = useAuth();
   const { user } = useUser();
 
+  const getUserPhoto = () => {
+    return user?.imageUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
+  };
+
+  const [profilePhoto, setProfilePhoto] = useState(getUserPhoto());
+
+  useFocusEffect(
+    useCallback(() => {
+      if (route?.params?.updatedPhoto) {
+        setProfilePhoto(route.params.updatedPhoto);
+      }
+    }, [route])
+  );
+
   const handleOptionPress = (screen: string) => {
-    if (screen === 'History') {
+    if (screen === 'PersonalDetails') {
+      navigation.navigate('PersonalDetails', {
+        name: getUserName(),
+        email: getUserEmail(),
+        phone: getUserPhone(),
+        gender: '',
+        emergencyName: '',
+        emergencyPhone: '',
+        photo: getUserPhoto(),
+      });
+    } else if (screen === 'EditProfile') {
+      navigation.navigate('EditProfile');
+    } else if (screen === 'History') {
       navigation.navigate('History');
     } else if (screen === 'Wallet') {
       navigation.navigate('Wallet');
     } else if (screen === 'Settings') {
       navigation.navigate('Settings');
+    } else if (screen === 'About') {
+      navigation.navigate('About');
     } else {
       console.log(`Navigate to ${screen}`);
     }
@@ -99,10 +126,6 @@ export default function ProfileScreen({ navigation }: any) {
     return user?.primaryPhoneNumber?.phoneNumber || '';
   };
 
-  const getUserPhoto = () => {
-    return user?.imageUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -118,7 +141,7 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.profileCard}>
           <View style={styles.profileInfo}>
             <Image
-              source={{ uri: getUserPhoto() }}
+              source={{ uri: profilePhoto }}
               style={styles.profilePhoto}
             />
             <View style={styles.profileDetails}>
@@ -130,7 +153,11 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={styles.profilePhone}>{getUserPhone()}</Text>
               )}
             </View>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile', {
+              name: getUserName(),
+              email: getUserEmail(),
+              phone: getUserPhone(),
+            })}>
               <Ionicons name="pencil" size={20} color={Colors.primary} />
             </TouchableOpacity>
           </View>
