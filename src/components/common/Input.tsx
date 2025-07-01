@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -19,6 +18,7 @@ interface InputProps extends TextInputProps {
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
   containerStyle?: any;
+  leftElement?: React.ReactNode;
 }
 
 export default function Input({
@@ -29,6 +29,7 @@ export default function Input({
   onRightIconPress,
   containerStyle,
   secureTextEntry,
+  leftElement,
   ...props
 }: InputProps) {
   const [isSecure, setIsSecure] = useState(secureTextEntry);
@@ -46,16 +47,18 @@ export default function Input({
         isFocused && styles.inputContainerFocused,
         error && styles.inputContainerError,
       ]}>
-        {leftIcon && (
+        {leftElement ? (
+          <View style={styles.leftElement}>{leftElement}</View>
+        ) : leftIcon ? (
           <Ionicons
             name={leftIcon}
             size={Layout.iconSize.md}
             color={Colors.gray400}
             style={styles.leftIcon}
           />
-        )}
+        ) : null}
         <TextInput
-          style={[styles.input, leftIcon && styles.inputWithLeftIcon]}
+          style={[styles.input, (leftIcon || leftElement) && styles.inputWithLeftIcon]}
           placeholderTextColor={Colors.gray400}
           secureTextEntry={isSecure}
           onFocus={() => setIsFocused(true)}
@@ -131,5 +134,10 @@ const styles = StyleSheet.create({
     fontSize: Layout.fontSize.xs,
     color: Colors.error,
     marginTop: Layout.spacing.xs,
+  },
+  leftElement: {
+    marginRight: Layout.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
