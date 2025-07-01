@@ -1,7 +1,10 @@
+export const PRIMARY_GREEN = '#219C7E';
+export const TITLE_COLOR = '#111827';
+export const SUBTITLE_COLOR = '#6B7280';
 
 export const Colors = {
   // Primary Colors
-  primary: '#0891b2', // Teal
+  primary: PRIMARY_GREEN,
   primaryDark: '#0e7490',
   primaryLight: '#22d3ee',
   
@@ -12,16 +15,16 @@ export const Colors = {
   // Accent Colors
   accent: '#f97316', // Orange
   accentLight: '#fb923c',
-  coral: '#ff6b6b',
+  coral: '#FF6B6B',
   
   // Neutral Colors
-  white: '#ffffff',
+  white: '#FFF',
   black: '#000000',
   gray50: '#f8fafc',
-  gray100: '#f1f5f9',
-  gray200: '#e2e8f0',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
   gray300: '#cbd5e1',
-  gray400: '#94a3b8',
+  gray400: '#9CA3AF',
   gray500: '#64748b',
   gray600: '#475569',
   gray700: '#334155',
@@ -35,9 +38,9 @@ export const Colors = {
   info: '#3b82f6',
   
   // Background Colors
-  background: '#ffffff',
+  background: '#F8F9FB',
   surface: '#f8fafc',
-  card: '#ffffff',
+  card: '#FFF',
   
   // Text Colors
   text: '#1e293b',
@@ -46,10 +49,13 @@ export const Colors = {
   textInverse: '#ffffff',
   
   // Border Colors
-  border: '#e2e8f0',
+  border: '#E5E7EB',
   borderLight: '#f1f5f9',
   
   // Shadow Colors
-  shadow: 'rgba(0, 0, 0, 0.1)',
+  shadow: '#000',
   shadowDark: 'rgba(0, 0, 0, 0.2)',
+  
+  title: TITLE_COLOR,
+  subtitle: SUBTITLE_COLOR,
 };

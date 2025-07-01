@@ -46,7 +46,7 @@ const screens = [
         <Image source={require('../../../assets/images/appacella-logo-blue.png')} style={{ width: 270, height: 270, resizeMode: 'contain' }} />
       </View>
     ),
-    title: 'Eco-Friendly Travel',
+    title: 'she-to-she',
     subtitle: 'Reduce your carbon footprint while getting around the city. Choose sustainable transportation for a greener future.',
   },
 ];

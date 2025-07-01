@@ -31,6 +31,21 @@ import RideHistoryScreen from '../screens/profile/RideHistoryScreen';
 import WalletScreen from '../screens/profile/WalletScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 
+// Support Screens
+import HelpSupportScreen from '../screens/support/HelpSupportScreen';
+import RideIssuesScreen from '../screens/support/RideIssuesScreen';
+import AccidentReportScreen from '../screens/support/AccidentReportScreen';
+import AccidentDetailsScreen from '../screens/support/AccidentDetailsScreen';
+import PersonalInfoUpdateScreen from '../screens/support/PersonalInfoUpdateScreen';
+import CancellationFeeScreen from '../screens/support/CancellationFeeScreen';
+import DriverUnprofessionalScreen from '../screens/support/DriverUnprofessionalScreen';
+import VehicleUnexpectedScreen from '../screens/support/VehicleUnexpectedScreen';
+import LostItemScreen from '../screens/support/LostItemScreen';
+import AccountIssuesScreen from '../screens/support/AccountIssuesScreen';
+import PaymentsIssuesScreen from '../screens/support/PaymentsIssuesScreen';
+import OtherIssuesScreen from '../screens/support/OtherIssuesScreen';
+import TermsConditionScreen from '../screens/support/TermsConditionScreen';
+
 import { Colors } from '../constants/Colors';
 import { Layout } from '../constants/Layout';
 
@@ -120,6 +135,21 @@ function MainNavigator() {
       <Stack.Screen name="LocationSearch" component={LocationSearchScreen} />
       <Stack.Screen name="RideEstimate" component={RideEstimateScreen} />
       <Stack.Screen name="ConfirmRide" component={ConfirmRideScreen} />
+      
+      {/* Support Flow */}
+      <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+      <Stack.Screen name="RideIssues" component={RideIssuesScreen} />
+      <Stack.Screen name="AccidentReport" component={AccidentReportScreen} />
+      <Stack.Screen name="AccidentDetails" component={AccidentDetailsScreen} />
+      <Stack.Screen name="PersonalInfoUpdate" component={PersonalInfoUpdateScreen} />
+      <Stack.Screen name="CancellationFee" component={CancellationFeeScreen} />
+      <Stack.Screen name="DriverUnprofessional" component={DriverUnprofessionalScreen} />
+      <Stack.Screen name="VehicleUnexpected" component={VehicleUnexpectedScreen} />
+      <Stack.Screen name="LostItem" component={LostItemScreen} />
+      <Stack.Screen name="AccountIssues" component={AccountIssuesScreen} />
+      <Stack.Screen name="PaymentsIssues" component={PaymentsIssuesScreen} />
+      <Stack.Screen name="OtherIssues" component={OtherIssuesScreen} />
+      <Stack.Screen name="TermsCondition" component={TermsConditionScreen} />
       
       {/* Ride Flow */}
       <Stack.Screen name="FindingDriver" component={FindingDriverScreen} />

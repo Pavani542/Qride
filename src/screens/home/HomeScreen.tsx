@@ -33,6 +33,10 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('History');
   };
 
+  const handleSupport = () => {
+    navigation.navigate('HelpSupport');
+  };
+
   const getUserName = () => {
     if (user?.firstName) {
       return user.firstName;
@@ -128,7 +132,7 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.actionText}>Offers</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleSupport}>
               <View style={styles.actionIcon}>
                 <Ionicons name="help-circle" size={24} color={Colors.info} />
               </View>
