@@ -8,6 +8,8 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +19,14 @@ import { Layout } from '../../constants/Layout';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 
+const COUNTRY_CODES = [
+  { code: '+91', label: 'IN' },
+  { code: '+1', label: 'US' },
+];
+
 export default function LoginScreen({ navigation }: any) {
+  const [countryCode, setCountryCode] = useState(COUNTRY_CODES[0].code);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -25,6 +34,7 @@ export default function LoginScreen({ navigation }: any) {
   const handleSendOTP = async () => {
     if (!isLoaded) return;
 
+    // US: 10 digits, IN: 10 digits (can be customized if needed)
     if (phoneNumber.length !== 10) {
       Alert.alert('Error', 'Please enter a valid 10-digit phone number');
       return;
@@ -33,29 +43,25 @@ export default function LoginScreen({ navigation }: any) {
     setIsLoading(true);
 
     try {
-      // Format phone number for Clerk (add +91 country code)
-      const formattedPhone = `+91${phoneNumber}`;
-      
+      // Format phone number for Clerk (add selected country code)
+      const formattedPhone = `${countryCode}${phoneNumber}`;
       // Start the sign-in process using the phone number method
       const { supportedFirstFactors } = await signIn.create({
         identifier: formattedPhone,
       });
-
       // Find the phone number factor
       const phoneNumberFactor = supportedFirstFactors?.find((factor: any) => {
         return factor.strategy === 'phone_code';
       }) as any;
-
       if (phoneNumberFactor) {
         // Prepare the phone number verification
         await signIn.prepareFirstFactor({
           strategy: 'phone_code',
           phoneNumberId: phoneNumberFactor.phoneNumberId,
         });
-
-        navigation.navigate('OTPVerification', { 
+        navigation.navigate('OTPVerification', {
           phoneNumber: formattedPhone,
-          isSignIn: true 
+          isSignIn: true,
         });
       }
     } catch (err: any) {
@@ -69,6 +75,44 @@ export default function LoginScreen({ navigation }: any) {
   const handleSignUp = () => {
     navigation.navigate('SignUp');
   };
+
+  const renderCountryCodeSelector = () => (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <TouchableOpacity
+        style={styles.countryCodeButton}
+        onPress={() => setShowDropdown(true)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.countryCodeText}>{countryCode}</Text>
+        <Ionicons name={showDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.gray400} />
+      </TouchableOpacity>
+      <Modal
+        visible={showDropdown}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDropdown(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowDropdown(false)}>
+          <View style={styles.modalOverlay} />
+        </TouchableWithoutFeedback>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Select Country Code</Text>
+          {COUNTRY_CODES.map((item) => (
+            <TouchableOpacity
+              key={item.code}
+              style={styles.modalItem}
+              onPress={() => {
+                setCountryCode(item.code);
+                setShowDropdown(false);
+              }}
+            >
+              <Text style={styles.modalItemText}>{item.label} {item.code}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Modal>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,7 +139,7 @@ export default function LoginScreen({ navigation }: any) {
               onChangeText={setPhoneNumber}
               keyboardType="phone-pad"
               maxLength={10}
-              leftIcon="call"
+              leftElement={renderCountryCodeSelector()}
             />
 
             <Button
@@ -213,5 +257,53 @@ const styles = StyleSheet.create({
   linkText: {
     color: Colors.primary,
     fontWeight: '600',
+  },
+  countryCodeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Layout.spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Layout.borderRadius.md,
+  },
+  countryCodeText: {
+    fontSize: Layout.fontSize.md,
+    color: Colors.text,
+    marginRight: Layout.spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalContent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: Layout.borderRadius.lg,
+    borderTopRightRadius: Layout.borderRadius.lg,
+    padding: Layout.spacing.xl,
+    paddingBottom: Layout.spacing.xl + 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: Layout.fontSize.lg,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: Layout.spacing.lg,
+    textAlign: 'center',
+  },
+  modalItem: {
+    paddingVertical: Layout.spacing.md,
+    alignItems: 'center',
+  },
+  modalItemText: {
+    fontSize: Layout.fontSize.md,
+    color: Colors.text,
   },
 });

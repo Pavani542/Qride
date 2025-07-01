@@ -14,11 +14,39 @@ import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 import { mockLocations } from '../../data/mockData';
 import { getGreeting } from '../../utils/helpers';
+import MapView, { Marker } from 'react-native-maps';
+import { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: any) {
   const { user } = useUser();
+
+  const [location, setLocation] = useState<any>(null);
+  const [region, setRegion] = useState({
+    latitude: 28.6139, // Default: New Delhi
+    longitude: 77.2090,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return;
+      }
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc.coords);
+      setRegion({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    })();
+  }, []);
 
   const handleLocationSearch = (type: 'pickup' | 'destination') => {
     navigation.navigate('LocationSearch', { type });
@@ -68,13 +96,36 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Map Container */}
         <View style={styles.mapContainer}>
-          <View style={styles.mapPlaceholder}>
-            <Ionicons name="map" size={48} color={Colors.gray400} />
-            <Text style={styles.mapText}>Map View</Text>
-          </View>
-          
+          <MapView
+            style={{ flex: 1 }}
+            region={region}
+            showsUserLocation={true}
+            showsMyLocationButton={true}
+          >
+            {location && (
+              <Marker
+                coordinate={{
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                }}
+                title="You are here"
+              />
+            )}
+          </MapView>
           {/* Current Location Button */}
-          <TouchableOpacity style={styles.currentLocationButton}>
+          <TouchableOpacity
+            style={styles.currentLocationButton}
+            onPress={async () => {
+              let loc = await Location.getCurrentPositionAsync({});
+              setLocation(loc.coords);
+              setRegion({
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              });
+            }}
+          >
             <Ionicons name="locate" size={20} color={Colors.primary} />
           </TouchableOpacity>
         </View>
