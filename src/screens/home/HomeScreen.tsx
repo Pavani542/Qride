@@ -104,42 +104,7 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionGrid}>
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={styles.actionIcon}>
-                <Ionicons name="time" size={24} color={Colors.primary} />
-              </View>
-              <Text style={styles.actionText}>Schedule Ride</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={handleRideHistory}
-            >
-              <View style={styles.actionIcon}>
-                <Ionicons name="receipt" size={24} color={Colors.accent} />
-              </View>
-              <Text style={styles.actionText}>Ride History</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={styles.actionIcon}>
-                <Ionicons name="gift" size={24} color={Colors.coral} />
-              </View>
-              <Text style={styles.actionText}>Offers</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton} onPress={handleSupport}>
-              <View style={styles.actionIcon}>
-                <Ionicons name="help-circle" size={24} color={Colors.info} />
-              </View>
-              <Text style={styles.actionText}>Support</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        
 
         {/* Saved Places */}
         <View style={styles.savedPlaces}>

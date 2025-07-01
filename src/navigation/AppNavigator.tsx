@@ -18,6 +18,8 @@ import HomeScreen from '../screens/home/HomeScreen';
 import LocationSearchScreen from '../screens/home/LocationSearchScreen';
 import RideEstimateScreen from '../screens/home/RideEstimateScreen';
 import ConfirmRideScreen from '../screens/home/ConfirmRideScreen';
+import ScheduleRideScreen from '../screens/home/ScheduleRideScreen';
+import OffersScreen from '../screens/home/OffersScreen';
 
 // Ride Screens
 import FindingDriverScreen from '../screens/ride/FindingDriverScreen';
@@ -135,6 +137,8 @@ function MainNavigator() {
       <Stack.Screen name="LocationSearch" component={LocationSearchScreen} />
       <Stack.Screen name="RideEstimate" component={RideEstimateScreen} />
       <Stack.Screen name="ConfirmRide" component={ConfirmRideScreen} />
+      <Stack.Screen name="ScheduleRide" component={ScheduleRideScreen} />
+      <Stack.Screen name="Offers" component={OffersScreen} />
       
       {/* Support Flow */}
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />

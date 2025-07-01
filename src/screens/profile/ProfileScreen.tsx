@@ -21,32 +21,22 @@ const profileOptions = [
     icon: 'person-outline',
     screen: 'EditProfile',
   },
+  
   {
     id: '2',
-    title: 'Ride History',
-    icon: 'time-outline',
-    screen: 'History',
-  },
-  {
-    id: '3',
     title: 'Wallet & Payments',
     icon: 'wallet-outline',
     screen: 'Wallet',
   },
   {
-    id: '4',
+    id: '3',
     title: 'Settings',
     icon: 'settings-outline',
     screen: 'Settings',
   },
+ 
   {
-    id: '5',
-    title: 'Help & Support',
-    icon: 'help-circle-outline',
-    screen: 'Support',
-  },
-  {
-    id: '6',
+    id: '4',
     title: 'About',
     icon: 'information-circle-outline',
     screen: 'About',
@@ -165,26 +155,36 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <View style={styles.quickActionIcon}>
-              <Ionicons name="gift" size={24} color={Colors.accent} />
-            </View>
-            <Text style={styles.quickActionText}>Offers</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.quickActionButton}>
-            <View style={styles.quickActionIcon}>
-              <Ionicons name="people" size={24} color={Colors.primary} />
-            </View>
-            <Text style={styles.quickActionText}>Refer Friends</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.quickActionButton}>
-            <View style={styles.quickActionIcon}>
-              <Ionicons name="shield-checkmark" size={24} color={Colors.success} />
-            </View>
-            <Text style={styles.quickActionText}>Safety</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionGrid}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('ScheduleRide')}>
+              <View style={styles.actionIcon}>
+                <Ionicons name="time" size={24} color={Colors.primary} />
+              </View>
+              <Text style={styles.actionText}>Schedule Ride</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('History')}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons name="receipt" size={24} color={Colors.accent} />
+              </View>
+              <Text style={styles.actionText}>Ride History</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.getParent()?.navigate('Offers')}>
+              <View style={styles.actionIcon}>
+                <Ionicons name="gift" size={24} color={Colors.coral} />
+              </View>
+              <Text style={styles.actionText}>Offers</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('HelpSupport')}>
+              <View style={styles.actionIcon}>
+                <Ionicons name="help-circle" size={24} color={Colors.info} />
+              </View>
+              <Text style={styles.actionText}>Support</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Menu Options */}
@@ -318,11 +318,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.borderLight,
   },
   quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
     backgroundColor: Colors.white,
     marginHorizontal: Layout.spacing.lg,
-    marginBottom: Layout.spacing.md,
+    marginBottom: Layout.spacing.lg,
     borderRadius: Layout.borderRadius.lg,
     padding: Layout.spacing.lg,
     shadowColor: Colors.shadow,
@@ -331,10 +329,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  quickActionButton: {
+  sectionTitle: {
+    fontSize: Layout.fontSize.lg,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: Layout.spacing.md,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  actionButton: {
     alignItems: 'center',
   },
-  quickActionIcon: {
+  actionIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -343,7 +351,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: Layout.spacing.sm,
   },
-  quickActionText: {
+  actionText: {
     fontSize: Layout.fontSize.sm,
     fontWeight: '600',
     color: Colors.text,
