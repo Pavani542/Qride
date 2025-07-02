@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -7,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Share,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -140,12 +141,32 @@ export default function ConfirmRideScreen({ navigation, route }: any) {
               <Text style={styles.safetyText}>Live tracking</Text>
             </View>
             <View style={styles.safetyFeature}>
-              <Ionicons name="call" size={20} color={Colors.success} />
-              <Text style={styles.safetyText}>Emergency contact</Text>
+              <TouchableOpacity
+                style={styles.safetyFeature}
+                onPress={() => {
+                  Linking.openURL(`tel:${emergencyPhone}`);
+                }}
+              >
+                <Ionicons name="call" size={20} color={Colors.success} />
+                <Text style={styles.safetyText}>Emergency contact</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.safetyFeature}>
-              <Ionicons name="share" size={20} color={Colors.success} />
-              <Text style={styles.safetyText}>Share trip</Text>
+              <TouchableOpacity
+                style={styles.safetyFeature}
+                onPress={async () => {
+                  try {
+                    await Share.share({
+                      message: 'I am sharing my trip with you! Track my ride here: [insert trip link or details]',
+                    });
+                  } catch (error) {
+                    console.log('Error sharing trip:', error);
+                  }
+                }}
+              >
+                <Ionicons name="share" size={20} color={Colors.success} />
+                <Text style={styles.safetyText}>Share trip</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
