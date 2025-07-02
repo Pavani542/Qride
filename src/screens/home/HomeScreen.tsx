@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useUser } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 import { mockLocations } from '../../data/mockData';
-import { getGreeting } from '../../utils/helpers';
+import { getGreeting, useAssignUserType } from '../../utils/helpers';
 import MapView, { Marker } from 'react-native-maps';
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
@@ -31,6 +31,7 @@ export default function HomeScreen({ navigation }: any) {
     dropoffLocation,
     setDropoffLocation,
   } = useLocationStore();
+  const { getToken } = useAuth();
 
   const [region, setRegion] = useState({
     latitude: 28.6139, // Default: New Delhi
@@ -38,6 +39,8 @@ export default function HomeScreen({ navigation }: any) {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
+
+  useAssignUserType('user');
 
   // On mount, get current location and set as pickup if not set
   useEffect(() => {
@@ -82,6 +85,13 @@ export default function HomeScreen({ navigation }: any) {
       }));
     }
   }, [pickupLocation, dropoffLocation]);
+
+  useEffect(() => {
+    (async () => {
+      const token = await getToken();
+      console.log('Clerk JWT token:', token);
+    })();
+  }, [getToken]);
 
   const handleLocationSearch = (type: 'pickup' | 'destination') => {
     navigation.navigate('LocationSearch', { type });

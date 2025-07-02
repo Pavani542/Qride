@@ -17,6 +17,7 @@ import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import { useAssignUserType } from '../../utils/helpers';
 
 export default function ProfileSetupScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
@@ -25,6 +26,8 @@ export default function ProfileSetupScreen({ navigation }: any) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+
+  useAssignUserType('user');
 
   const handleImagePicker = () => {
     Alert.alert(
