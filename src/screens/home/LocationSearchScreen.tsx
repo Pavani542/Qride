@@ -1,101 +1,117 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
+import { useLocationStore } from '../../store/useLocationStore';
 
-const mockSearchResults = [
-  {
-    id: '1',
-    name: 'Koramangala 5th Block',
-    address: 'Koramangala, Bangalore, Karnataka',
-    type: 'location',
-  },
-  {
-    id: '2',
-    name: 'Electronic City',
-    address: 'Electronic City, Bangalore, Karnataka',
-    type: 'location',
-  },
-  {
-    id: '3',
-    name: 'Indiranagar',
-    address: 'Indiranagar, Bangalore, Karnataka',
-    type: 'location',
-  },
-  {
-    id: '4',
-    name: 'Whitefield',
-    address: 'Whitefield, Bangalore, Karnataka',
-    type: 'location',
-  },
-];
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDHN3SH_ODlqnHcU9Blvv2pLpnDNkg03lU';
 
-const recentSearches = [
-  {
-    id: '1',
-    name: 'MG Road Metro Station',
-    address: 'MG Road, Bangalore',
-    type: 'recent',
-  },
-  {
-    id: '2',
-    name: 'Forum Mall',
-    address: 'Koramangala, Bangalore',
-    type: 'recent',
-  },
-];
+interface PlaceResult {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
+interface PlaceDetails {
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+  formatted_address: string;
+}
 
 export default function LocationSearchScreen({ navigation, route }: any) {
   const { type } = route.params; // 'pickup' or 'destination'
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(mockSearchResults);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
 
-  const handleLocationSelect = (location: any) => {
-    if (type === 'destination') {
-      navigation.navigate('RideEstimate', { destination: location });
+  useEffect(() => {
+    if (searchQuery.length > 2) {
+      searchPlaces(searchQuery);
     } else {
-      navigation.goBack();
+      setSearchResults([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const searchPlaces = async (query: string) => {
+    setIsSearching(true);
+    try {
+      // Default to New Delhi if no location
+      const location = '28.6139,77.2090';
+      const radius = 50000; // 50km
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&location=${location}&radius=${radius}&components=country:in&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.status === 'OK') {
+        setSearchResults(data.predictions || []);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // Filter results based on query
-    const filtered = mockSearchResults.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query.toLowerCase()) ||
-        item.address.toLowerCase().includes(query.toLowerCase())
-    );
-    setSearchResults(filtered);
+  const getPlaceDetails = async (placeId: string): Promise<PlaceDetails | null> => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.status === 'OK') {
+        return data.result;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
   };
 
-  const renderLocationItem = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles.locationItem}
-      onPress={() => handleLocationSelect(item)}
-    >
-      <View style={styles.locationIcon}>
-        <Ionicons
-          name={item.type === 'recent' ? 'time' : 'location'}
-          size={20}
-          color={Colors.gray400}
-        />
+  const handleLocationSelect = async (item: PlaceResult) => {
+    const placeDetails = await getPlaceDetails(item.place_id);
+    if (!placeDetails) return;
+    const location = {
+      latitude: placeDetails.geometry.location.lat,
+      longitude: placeDetails.geometry.location.lng,
+      address: placeDetails.formatted_address,
+    };
+    if (type === 'pickup') {
+      useLocationStore.getState().setPickupLocation(location);
+      navigation.goBack();
+    } else if (type === 'destination') {
+      useLocationStore.getState().setDropoffLocation(location);
+      navigation.navigate('RideEstimate', { destination: location });
+    }
+  };
+
+  const renderSearchResult = ({ item }: { item: PlaceResult }) => (
+    <TouchableOpacity style={styles.resultItem} onPress={() => handleLocationSelect(item)}>
+      <Ionicons name="location-outline" size={20} color={Colors.primary} style={{ marginRight: 12 }} />
+      <View>
+        <Text style={styles.resultMain}>{item.structured_formatting.main_text}</Text>
+        <Text style={styles.resultSecondary}>{item.structured_formatting.secondary_text}</Text>
       </View>
-      <View style={styles.locationInfo}>
-        <Text style={styles.locationName}>{item.name}</Text>
-        <Text style={styles.locationAddress}>{item.address}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
     </TouchableOpacity>
   );
 
@@ -113,62 +129,32 @@ export default function LocationSearchScreen({ navigation, route }: any) {
           {type === 'pickup' ? 'Pickup Location' : 'Where to?'}
         </Text>
       </View>
-
       {/* Search Input */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color={Colors.gray400} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={`Search for ${type} location`}
-            value={searchQuery}
-            onChangeText={handleSearch}
-            autoFocus
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch('')}>
-              <Ionicons name="close-circle" size={20} color={Colors.gray400} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Current Location Option */}
-      <TouchableOpacity style={styles.currentLocationOption}>
-        <View style={styles.currentLocationIcon}>
-          <Ionicons name="locate" size={20} color={Colors.primary} />
-        </View>
-        <View style={styles.locationInfo}>
-          <Text style={styles.locationName}>Use current location</Text>
-          <Text style={styles.locationAddress}>Koramangala 5th Block, Bangalore</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-      </TouchableOpacity>
-
-      {/* Recent Searches */}
-      {searchQuery.length === 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Searches</Text>
-          <FlatList
-            data={recentSearches}
-            renderItem={renderLocationItem}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
-      )}
-
-      {/* Search Results */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {searchQuery.length > 0 ? 'Search Results' : 'Popular Places'}
-        </Text>
-        <FlatList
-          data={searchResults}
-          renderItem={renderLocationItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          placeholder={`Search for ${type} location`}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoFocus
+          clearButtonMode="while-editing"
         />
+      </View>
+      {/* Results */}
+      <View style={{ flex: 1 }}>
+        {isSearching ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color={Colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={searchResults}
+            keyExtractor={item => item.place_id}
+            renderItem={renderSearchResult}
+            contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -195,81 +181,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text,
   },
-  searchContainer: {
+  inputContainer: {
     paddingHorizontal: Layout.spacing.lg,
-    paddingVertical: Layout.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    paddingTop: Layout.spacing.md,
+    paddingBottom: Layout.spacing.sm,
   },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  textInput: {
+    fontSize: 16,
     backgroundColor: Colors.gray50,
     borderRadius: Layout.borderRadius.md,
-    paddingHorizontal: Layout.spacing.md,
-    paddingVertical: Layout.spacing.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: Layout.fontSize.md,
-    color: Colors.text,
-    marginLeft: Layout.spacing.sm,
+  listContent: {
+    paddingHorizontal: Layout.spacing.lg,
+    paddingTop: 8,
   },
-  currentLocationOption: {
+  resultItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Layout.spacing.lg,
-    paddingVertical: Layout.spacing.md,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
-  currentLocationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.gray50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Layout.spacing.md,
-  },
-  section: {
-    flex: 1,
-    paddingHorizontal: Layout.spacing.lg,
-    paddingTop: Layout.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: Layout.fontSize.md,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Layout.spacing.md,
-  },
-  locationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Layout.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  locationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.gray50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Layout.spacing.md,
-  },
-  locationInfo: {
-    flex: 1,
-  },
-  locationName: {
-    fontSize: Layout.fontSize.md,
-    fontWeight: '600',
+  resultMain: {
+    fontSize: 16,
+    fontWeight: '500',
     color: Colors.text,
   },
-  locationAddress: {
-    fontSize: Layout.fontSize.sm,
-    color: Colors.textSecondary,
+  resultSecondary: {
+    fontSize: 14,
+    color: Colors.textLight,
     marginTop: 2,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

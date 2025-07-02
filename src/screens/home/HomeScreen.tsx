@@ -17,13 +17,21 @@ import { getGreeting } from '../../utils/helpers';
 import MapView, { Marker } from 'react-native-maps';
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+import { useLocationStore } from '../../store/useLocationStore';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: any) {
   const { user } = useUser();
+  const {
+    pickupLocation,
+    setPickupLocation,
+    currentLocation,
+    setCurrentLocation,
+    dropoffLocation,
+    setDropoffLocation,
+  } = useLocationStore();
 
-  const [location, setLocation] = useState<any>(null);
   const [region, setRegion] = useState({
     latitude: 28.6139, // Default: New Delhi
     longitude: 77.2090,
@@ -31,6 +39,7 @@ export default function HomeScreen({ navigation }: any) {
     longitudeDelta: 0.05,
   });
 
+  // On mount, get current location and set as pickup if not set
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -38,15 +47,41 @@ export default function HomeScreen({ navigation }: any) {
         return;
       }
       let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc.coords);
-      setRegion({
+      const coords = {
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
+        address: 'Current Location',
+      };
+      setCurrentLocation(coords);
+      if (!pickupLocation) {
+        setPickupLocation(coords);
+      }
+      setRegion({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       });
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When pickup or dropoff location changes, update map region
+  useEffect(() => {
+    if (dropoffLocation) {
+      setRegion((prev) => ({
+        ...prev,
+        latitude: dropoffLocation.latitude,
+        longitude: dropoffLocation.longitude,
+      }));
+    } else if (pickupLocation) {
+      setRegion((prev) => ({
+        ...prev,
+        latitude: pickupLocation.latitude,
+        longitude: pickupLocation.longitude,
+      }));
+    }
+  }, [pickupLocation, dropoffLocation]);
 
   const handleLocationSearch = (type: 'pickup' | 'destination') => {
     navigation.navigate('LocationSearch', { type });
@@ -80,7 +115,7 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity style={styles.menuButton}>
-            <Ionicons name="menu" size={24} color={Colors.text} />
+            <Ionicons name="map" size={24} color={Colors.text} />
           </TouchableOpacity>
           <View>
             <Text style={styles.greeting}>{getGreeting()}!</Text>
@@ -93,109 +128,82 @@ export default function HomeScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Map Container */}
-        <View style={styles.mapContainer}>
-          <MapView
-            style={{ flex: 1 }}
-            region={region}
-            showsUserLocation={true}
-            showsMyLocationButton={true}
-          >
-            {location && (
-              <Marker
-                coordinate={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                }}
-                title="You are here"
-              />
-            )}
-          </MapView>
-          {/* Current Location Button */}
-          <TouchableOpacity
-            style={styles.currentLocationButton}
-            onPress={async () => {
-              let loc = await Location.getCurrentPositionAsync({});
-              setLocation(loc.coords);
-              setRegion({
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              });
-            }}
-          >
-            <Ionicons name="locate" size={20} color={Colors.primary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Ride Booking Card */}
-        <View style={styles.bookingCard}>
+      <View style={styles.mapFullScreen}>
+        <MapView
+          style={StyleSheet.absoluteFill}
+          region={region}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+        >
+          {pickupLocation && (
+            <Marker
+              coordinate={{
+                latitude: pickupLocation.latitude,
+                longitude: pickupLocation.longitude,
+              }}
+              title={pickupLocation.address || 'Pickup Location'}
+              pinColor={'green'}
+            />
+          )}
+          {dropoffLocation && (
+            <Marker
+              coordinate={{
+                latitude: dropoffLocation.latitude,
+                longitude: dropoffLocation.longitude,
+              }}
+              title={dropoffLocation.address || 'Destination'}
+              pinColor={'red'}
+            />
+          )}
+        </MapView>
+        {/* Current Location Button */}
+        <TouchableOpacity
+          style={styles.currentLocationButton}
+          onPress={async () => {
+            let loc = await Location.getCurrentPositionAsync({});
+            const coords = {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              address: 'Current Location',
+            };
+            setCurrentLocation(coords);
+            setPickupLocation(coords);
+            setRegion({
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            });
+          }}
+        >
+          <Ionicons name="locate" size={20} color={Colors.primary} />
+        </TouchableOpacity>
+        {/* Ride Booking Card Floating Above Bottom Nav */}
+        <View style={styles.bookingCardFloating}>
           <Text style={styles.cardTitle}>Where to?</Text>
-          
           <TouchableOpacity
             style={styles.locationInput}
             onPress={() => handleLocationSearch('pickup')}
           >
             <View style={styles.locationDot} />
-            <Text style={styles.locationText}>Your current location</Text>
+            <Text style={styles.locationText}>
+              {pickupLocation?.address || 'Your current location'}
+            </Text>
             <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
           </TouchableOpacity>
-
           <View style={styles.locationDivider} />
-
           <TouchableOpacity
             style={styles.locationInput}
             onPress={() => handleLocationSearch('destination')}
           >
             <View style={[styles.locationDot, styles.destinationDot]} />
-            <Text style={styles.locationPlaceholder}>Where are you going?</Text>
+            <Text style={styles.locationText}>
+              {dropoffLocation?.address || 'Where are you going?'}
+            </Text>
             <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
           </TouchableOpacity>
         </View>
-
-        
-
-        {/* Saved Places */}
-        <View style={styles.savedPlaces}>
-          <Text style={styles.sectionTitle}>Saved Places</Text>
-          {mockLocations.map((location) => (
-            <TouchableOpacity
-              key={location.id}
-              style={styles.savedPlaceItem}
-              onPress={() => handleQuickLocation(location)}
-            >
-              <View style={styles.savedPlaceIcon}>
-                <Ionicons
-                  name={location.type === 'home' ? 'home' : 'business'}
-                  size={20}
-                  color={Colors.primary}
-                />
-              </View>
-              <View style={styles.savedPlaceInfo}>
-                <Text style={styles.savedPlaceName}>{location.name}</Text>
-                <Text style={styles.savedPlaceAddress}>{location.address}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Promotional Banner */}
-        <View style={styles.promoBanner}>
-          <View style={styles.promoContent}>
-            <Text style={styles.promoTitle}>Get 50% Off</Text>
-            <Text style={styles.promoSubtitle}>On your next 3 rides</Text>
-            <TouchableOpacity style={styles.promoButton}>
-              <Text style={styles.promoButtonText}>Claim Now</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.promoIcon}>
-            <Ionicons name="gift" size={32} color={Colors.accent} />
-          </View>
-        </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Layout.spacing.lg,
-    paddingVertical: Layout.spacing.md,
+    paddingVertical: Layout.spacing.sm,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
@@ -243,26 +251,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.coral,
   },
-  content: {
+  mapFullScreen: {
     flex: 1,
-  },
-  mapContainer: {
-    height: 200,
-    backgroundColor: Colors.gray100,
-    margin: Layout.spacing.lg,
-    borderRadius: Layout.borderRadius.lg,
     position: 'relative',
-    overflow: 'hidden',
-  },
-  mapPlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapText: {
-    marginTop: Layout.spacing.sm,
-    fontSize: Layout.fontSize.md,
-    color: Colors.gray400,
   },
   currentLocationButton: {
     position: 'absolute',
@@ -449,5 +440,19 @@ const styles = StyleSheet.create({
   },
   promoIcon: {
     marginLeft: Layout.spacing.md,
+  },
+  bookingCardFloating: {
+    position: 'absolute',
+    left: Layout.spacing.sm,
+    right: Layout.spacing.sm,
+    bottom: Layout.spacing.sm, // leave space for bottom nav
+    backgroundColor: Colors.white,
+    borderRadius: Layout.borderRadius.lg,
+    padding: Layout.spacing.lg,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
 });

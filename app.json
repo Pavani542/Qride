@@ -50,6 +50,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://project-a9dff482.dev.kiki.dev"
+      },
+      "eas": {
+        "projectId": "84f24d0c-26df-4cec-afe7-d75952191729"
+      }
     }
   }
 }
