@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -58,7 +57,7 @@ export default function FindingDriverScreen({ navigation, route }: any) {
   }, []);
 
   const handleCancel = () => {
-    navigation.navigate('Home');
+    navigation.navigate('TabNavigator', { screen: 'Home' });
   };
 
   return (

@@ -21,7 +21,7 @@ import { useLocationStore } from '../../store/useLocationStore';
 
 const { width } = Dimensions.get('window');
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen({ navigation, route }: any) {
   const { user } = useUser();
   const {
     pickupLocation,
@@ -39,6 +39,8 @@ export default function HomeScreen({ navigation }: any) {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
+
+  const [dropLocation, setDropLocation] = useState<any>(null);
 
   useAssignUserType('user');
 
@@ -92,6 +94,12 @@ export default function HomeScreen({ navigation }: any) {
       console.log('Clerk JWT token:', token);
     })();
   }, [getToken]);
+
+  useEffect(() => {
+    if (route.params?.destination) {
+      setDropLocation(route.params.destination);
+    }
+  }, [route.params?.destination]);
 
   const handleLocationSearch = (type: 'pickup' | 'destination') => {
     navigation.navigate('LocationSearch', { type });
@@ -188,29 +196,24 @@ export default function HomeScreen({ navigation }: any) {
         >
           <Ionicons name="locate" size={20} color={Colors.primary} />
         </TouchableOpacity>
-        {/* Ride Booking Card Floating Above Bottom Nav */}
-        <View style={styles.bookingCardFloating}>
-          <Text style={styles.cardTitle}>Where to?</Text>
-          <TouchableOpacity
-            style={styles.locationInput}
-            onPress={() => handleLocationSearch('pickup')}
-          >
-            <View style={styles.locationDot} />
-            <Text style={styles.locationText}>
-              {pickupLocation?.address || 'Your current location'}
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+        {/* Where to? Card Overlay */}
+        <View style={styles.whereToCard}>
+          <Text style={styles.whereToTitle}>Where to?</Text>
+          <TouchableOpacity style={styles.whereToRow} activeOpacity={0.7}>
+            <View style={[styles.dot, { backgroundColor: 'green' }]} />
+            <Text style={styles.whereToText}>Current Location</Text>
           </TouchableOpacity>
-          <View style={styles.locationDivider} />
+          <View style={styles.divider} />
           <TouchableOpacity
-            style={styles.locationInput}
-            onPress={() => handleLocationSearch('destination')}
+            style={styles.whereToRow}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('DropLocationSelector')}
           >
-            <View style={[styles.locationDot, styles.destinationDot]} />
-            <Text style={styles.locationText}>
-              {dropoffLocation?.address || 'Where are you going?'}
+            <View style={[styles.dot, { backgroundColor: 'red' }]} />
+            <Text style={styles.whereToText}>
+              {dropLocation ? dropLocation.name : 'Where are you going?'}
             </Text>
-            <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
+            <Ionicons name="chevron-forward" size={20} color="#aaa" style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -464,5 +467,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+  },
+  whereToCard: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 24,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  whereToTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  whereToRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 14,
+  },
+  whereToText: {
+    fontSize: 16,
+    color: Colors.text,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.gray200,
+    marginVertical: 4,
+    borderRadius: 1,
   },
 });

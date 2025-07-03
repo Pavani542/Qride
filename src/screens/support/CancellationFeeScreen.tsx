@@ -173,7 +173,7 @@ export default function CancellationFeeScreen({ navigation }: any) {
           <Text style={styles.successText}>Your ride has been cancelled. {fee > 0 ? `A $${fee.toFixed(2)} fee was charged.` : 'No fee was charged.'}</Text>
           <TouchableOpacity
             style={styles.homeBtn}
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('TabNavigator', { screen: 'Home' })}
             accessibilityRole="button"
           >
             <Text style={styles.homeBtnText}>Back to Home</Text>
