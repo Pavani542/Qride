@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser, useAuth } from '@clerk/clerk-expo';
-import { useUser, useAuth } from '@clerk/clerk-expo';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 import { mockLocations } from '../../data/mockData';
@@ -32,7 +31,6 @@ export default function HomeScreen({ navigation, route }: any) {
     dropoffLocation,
     setDropoffLocation,
   } = useLocationStore();
-  const { getToken } = useAuth();
   const { getToken } = useAuth();
 
   const [region, setRegion] = useState({
@@ -220,84 +218,6 @@ export default function HomeScreen({ navigation, route }: any) {
         </View>
       </View>
     </SafeAreaView>
-        <View style={styles.mapFullScreen}>
-          <MapView
-            style={StyleSheet.absoluteFill}
-            region={region}
-            showsUserLocation={true}
-            showsMyLocationButton={true}
-          >
-            {pickupLocation && (
-              <Marker
-                coordinate={{
-                  latitude: pickupLocation.latitude,
-                  longitude: pickupLocation.longitude,
-                }}
-                title={pickupLocation.address || 'Pickup Location'}
-                pinColor={'green'}
-              />
-            )}
-            {dropoffLocation && (
-              <Marker
-                coordinate={{
-                  latitude: dropoffLocation.latitude,
-                  longitude: dropoffLocation.longitude,
-                }}
-                title={dropoffLocation.address || 'Destination'}
-                pinColor={'red'}
-              />
-            )}
-          </MapView>
-          {/* Current Location Button */}
-          <TouchableOpacity
-            style={styles.currentLocationButton}
-            onPress={async () => {
-              let loc = await Location.getCurrentPositionAsync({});
-              const coords = {
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-                address: 'Current Location',
-              };
-              setCurrentLocation(coords);
-              setPickupLocation(coords);
-              setRegion({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              });
-            }}
-          >
-            <Ionicons name="locate" size={20} color={Colors.primary} />
-          </TouchableOpacity>
-          {/* Ride Booking Card Floating Above Bottom Nav */}
-          <View style={styles.bookingCardFloating}>
-            <Text style={styles.cardTitle}>Where to?</Text>
-            <TouchableOpacity
-              style={styles.locationInput}
-              onPress={() => handleLocationSearch('pickup')}
-            >
-              <View style={styles.locationDot} />
-              <Text style={styles.locationText}>
-                {pickupLocation?.address || 'Your current location'}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-            </TouchableOpacity>
-            <View style={styles.locationDivider} />
-            <TouchableOpacity
-              style={styles.locationInput}
-              onPress={() => handleLocationSearch('destination')}
-            >
-              <View style={[styles.locationDot, styles.destinationDot]} />
-              <Text style={styles.locationText}>
-                {dropoffLocation?.address || 'Where are you going?'}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.gray400} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
-    </ClerkProvider>
   );
 }
 
