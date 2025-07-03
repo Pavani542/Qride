@@ -20,6 +20,9 @@ import RideEstimateScreen from '../screens/home/RideEstimateScreen';
 import ConfirmRideScreen from '../screens/home/ConfirmRideScreen';
 import ScheduleRideScreen from '../screens/home/ScheduleRideScreen';
 import OffersScreen from '../screens/home/OffersScreen';
+import DropLocationSelectorScreen from '../screens/home/DropLocationSelectorScreen';
+import DropPinLocationScreen from '../screens/home/DropPinLocationScreen';
+import RideOptionsScreen from '../screens/home/RideOptionsScreen';
 
 // Ride Screens
 import FindingDriverScreen from '../screens/ride/FindingDriverScreen';
@@ -137,11 +140,14 @@ function MainNavigator() {
       <Stack.Screen name="TabNavigator" component={TabNavigator} />
       
       {/* Home Flow */}
+      <Stack.Screen name="RideOptions" component={RideOptionsScreen} />
       <Stack.Screen name="LocationSearch" component={LocationSearchScreen} />
       <Stack.Screen name="RideEstimate" component={RideEstimateScreen} />
       <Stack.Screen name="ConfirmRide" component={ConfirmRideScreen} />
       <Stack.Screen name="ScheduleRide" component={ScheduleRideScreen} />
       <Stack.Screen name="Offers" component={OffersScreen} />
+      <Stack.Screen name="DropLocationSelector" component={DropLocationSelectorScreen} />
+      <Stack.Screen name="DropPinLocation" component={DropPinLocationScreen} />
       
       {/* Support Flow */}
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />

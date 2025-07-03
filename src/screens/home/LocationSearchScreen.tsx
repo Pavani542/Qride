@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 import { useLocationStore } from '../../store/useLocationStore';
+import LocationPickerMap from '../../components/common/LocationPickerMap';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDHN3SH_ODlqnHcU9Blvv2pLpnDNkg03lU';
 
@@ -40,18 +41,29 @@ export default function LocationSearchScreen({ navigation, route }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
+  const [noResults, setNoResults] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { recentLocations } = useLocationStore();
 
   useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (searchQuery.length > 2) {
-      searchPlaces(searchQuery);
+      debounceRef.current = setTimeout(() => {
+        searchPlaces(searchQuery);
+      }, 300);
     } else {
       setSearchResults([]);
+      setNoResults(false);
     }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const searchPlaces = async (query: string) => {
     setIsSearching(true);
+    setNoResults(false);
     try {
       // Default to New Delhi if no location
       const location = '28.6139,77.2090';
@@ -60,13 +72,16 @@ export default function LocationSearchScreen({ navigation, route }: any) {
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&location=${location}&radius=${radius}&components=country:in&key=${GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
-      if (data.status === 'OK') {
+      if (data.status === 'OK' && data.predictions.length > 0) {
         setSearchResults(data.predictions || []);
+        setNoResults(false);
       } else {
         setSearchResults([]);
+        setNoResults(true);
       }
     } catch (error) {
       setSearchResults([]);
+      setNoResults(true);
     } finally {
       setIsSearching(false);
     }
@@ -88,14 +103,20 @@ export default function LocationSearchScreen({ navigation, route }: any) {
     }
   };
 
-  const handleLocationSelect = async (item: PlaceResult) => {
-    const placeDetails = await getPlaceDetails(item.place_id);
-    if (!placeDetails) return;
-    const location = {
-      latitude: placeDetails.geometry.location.lat,
-      longitude: placeDetails.geometry.location.lng,
-      address: placeDetails.formatted_address,
-    };
+  const handleLocationSelect = async (item: PlaceResult | any) => {
+    let location;
+    if (item.place_id) {
+      const placeDetails = await getPlaceDetails(item.place_id);
+      if (!placeDetails) return;
+      location = {
+        latitude: placeDetails.geometry.location.lat,
+        longitude: placeDetails.geometry.location.lng,
+        address: placeDetails.formatted_address,
+      };
+    } else {
+      // Recent location
+      location = item;
+    }
     if (type === 'pickup') {
       useLocationStore.getState().setPickupLocation(location);
       navigation.goBack();
@@ -104,6 +125,16 @@ export default function LocationSearchScreen({ navigation, route }: any) {
       navigation.navigate('RideEstimate', { destination: location });
     }
   };
+
+  const renderRecentLocation = ({ item }: { item: any }) => (
+    <TouchableOpacity style={styles.resultItem} onPress={() => handleLocationSelect(item)}>
+      <Ionicons name="time-outline" size={20} color={Colors.primary} style={{ marginRight: 12 }} />
+      <View>
+        <Text style={styles.resultMain}>{item.address || item.name}</Text>
+        {item.address && <Text style={styles.resultSecondary}>{item.address}</Text>}
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderSearchResult = ({ item }: { item: PlaceResult }) => (
     <TouchableOpacity style={styles.resultItem} onPress={() => handleLocationSelect(item)}>
@@ -114,6 +145,15 @@ export default function LocationSearchScreen({ navigation, route }: any) {
       </View>
     </TouchableOpacity>
   );
+
+  // Combine recent locations and search results for FlatList
+  const showRecent = searchQuery.length > 2 && recentLocations.length > 0;
+  const combinedData = showRecent
+    ? [
+        { title: 'Recent Locations', data: recentLocations, isRecent: true },
+        { title: 'Suggestions', data: searchResults, isRecent: false },
+      ]
+    : [{ title: 'Suggestions', data: searchResults, isRecent: false }];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -140,19 +180,47 @@ export default function LocationSearchScreen({ navigation, route }: any) {
           clearButtonMode="while-editing"
         />
       </View>
-      {/* Results */}
+      {/* Map or Results */}
       <View style={{ flex: 1 }}>
-        {isSearching ? (
+        {searchQuery.length === 0 ? (
+          <LocationPickerMap
+            mode={type}
+            onLocationSelected={(location) => {
+              if (type === 'pickup') {
+                useLocationStore.getState().setPickupLocation(location);
+                navigation.goBack();
+              } else if (type === 'destination') {
+                useLocationStore.getState().setDropoffLocation(location);
+                navigation.navigate('RideEstimate', { destination: location });
+              }
+            }}
+          />
+        ) : isSearching ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color={Colors.primary} />
           </View>
+        ) : noResults ? (
+          <View style={styles.loadingContainer}>
+            <Text style={{ color: Colors.textLight }}>No suggestions found</Text>
+          </View>
         ) : (
           <FlatList
-            data={searchResults}
-            keyExtractor={item => item.place_id}
-            renderItem={renderSearchResult}
+            data={showRecent ? recentLocations.concat(searchResults) : searchResults}
+            keyExtractor={(item, idx) => item.place_id ? item.place_id : item.address + idx}
+            renderItem={({ item, index }) =>
+              item.place_id
+                ? renderSearchResult({ item })
+                : renderRecentLocation({ item })
+            }
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
+            ListHeaderComponent={
+              showRecent && recentLocations.length > 0 ? (
+                <Text style={{ fontWeight: '600', color: Colors.text, marginBottom: 8 }}>
+                  Recent Locations
+                </Text>
+              ) : null
+            }
           />
         )}
       </View>

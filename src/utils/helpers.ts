@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useUser } from '@clerk/clerk-expo';
 
 export const formatCurrency = (amount: number): string => {
   return `₹${amount.toLocaleString('en-IN')}`;
@@ -51,3 +53,19 @@ export const getGreeting = (): string => {
   if (hour < 17) return 'Good Afternoon';
   return 'Good Evening';
 };
+
+/**
+ * Custom hook to assign unsafeMetadata.type = "user" to Clerk user if not already set.
+ * @param {string} type - The user type to assign (e.g., "user").
+ */
+export function useAssignUserType(type: string) {
+  const { user, isLoaded } = useUser();
+
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+    // Only assign if not already set
+    if (user.unsafeMetadata?.type !== type) {
+      user.update({ unsafeMetadata: { ...user.unsafeMetadata, type } });
+    }
+  }, [isLoaded, user, type]);
+}

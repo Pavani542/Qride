@@ -10,37 +10,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser, useAuth } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 import { Colors } from '../../constants/Colors';
 import { Layout } from '../../constants/Layout';
 import { mockLocations } from '../../data/mockData';
-import { getGreeting } from '../../utils/helpers';
+import { getGreeting, useAssignUserType } from '../../utils/helpers';
 import MapView, { Marker } from 'react-native-maps';
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import { useLocationStore } from '../../store/useLocationStore';
-import { ClerkProvider } from '@clerk/clerk-expo';
-import * as SecureStore from 'expo-secure-store';
 
 const { width } = Dimensions.get('window');
 
-const tokenCache = {
-  async getToken(key: string) {
-    try {
-      return SecureStore.getItemAsync(key);
-    } catch (error) {
-      return null;
-    }
-  },
-  async saveToken(key: string, value: string) {
-    try {
-      return SecureStore.setItemAsync(key, value);
-    } catch (error) {
-      return;
-    }
-  },
-};
-
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen({ navigation, route }: any) {
   const { user } = useUser();
   const {
     pickupLocation,
@@ -51,6 +33,7 @@ export default function HomeScreen({ navigation }: any) {
     setDropoffLocation,
   } = useLocationStore();
   const { getToken } = useAuth();
+  const { getToken } = useAuth();
 
   const [region, setRegion] = useState({
     latitude: 28.6139, // Default: New Delhi
@@ -58,6 +41,10 @@ export default function HomeScreen({ navigation }: any) {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
+
+  const [dropLocation, setDropLocation] = useState<any>(null);
+
+  useAssignUserType('user');
 
   // On mount, get current location and set as pickup if not set
   useEffect(() => {
@@ -103,6 +90,19 @@ export default function HomeScreen({ navigation }: any) {
     }
   }, [pickupLocation, dropoffLocation]);
 
+  useEffect(() => {
+    (async () => {
+      const token = await getToken();
+      console.log('Clerk JWT token:', token);
+    })();
+  }, [getToken]);
+
+  useEffect(() => {
+    if (route.params?.destination) {
+      setDropLocation(route.params.destination);
+    }
+  }, [route.params?.destination]);
+
   const handleLocationSearch = (type: 'pickup' | 'destination') => {
     navigation.navigate('LocationSearch', { type });
   };
@@ -129,41 +129,97 @@ export default function HomeScreen({ navigation }: any) {
     return 'User';
   };
 
-  const fetchToken = async () => {
-    const token = await getToken();
-    // token is a JWT string, or null if not signed in
-    return token;
-  };
-
-  const storeTokenManually = async () => {
-    const token = await getToken();
-    if (token) {
-      await SecureStore.setItemAsync('clerk_session_token', token);
-    }
-  };
-
-  const token = await getToken();
-
   return (
-    <ClerkProvider tokenCache={tokenCache}>
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity style={styles.menuButton}>
-              <Ionicons name="map" size={24} color={Colors.text} />
-            </TouchableOpacity>
-            <View>
-              <Text style={styles.greeting}>{getGreeting()}!</Text>
-              <Text style={styles.userName}>{getUserName()}</Text>
-            </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity style={styles.menuButton}>
+            <Ionicons name="map" size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.greeting}>{getGreeting()}!</Text>
+            <Text style={styles.userName}>{getUserName()}</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications" size={24} color={Colors.text} />
-            <View style={styles.notificationBadge} />
+        </View>
+        <TouchableOpacity style={styles.notificationButton}>
+          <Ionicons name="notifications" size={24} color={Colors.text} />
+          <View style={styles.notificationBadge} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.mapFullScreen}>
+        <MapView
+          style={StyleSheet.absoluteFill}
+          region={region}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+        >
+          {pickupLocation && (
+            <Marker
+              coordinate={{
+                latitude: pickupLocation.latitude,
+                longitude: pickupLocation.longitude,
+              }}
+              title={pickupLocation.address || 'Pickup Location'}
+              pinColor={'green'}
+            />
+          )}
+          {dropoffLocation && (
+            <Marker
+              coordinate={{
+                latitude: dropoffLocation.latitude,
+                longitude: dropoffLocation.longitude,
+              }}
+              title={dropoffLocation.address || 'Destination'}
+              pinColor={'red'}
+            />
+          )}
+        </MapView>
+        {/* Current Location Button */}
+        <TouchableOpacity
+          style={styles.currentLocationButton}
+          onPress={async () => {
+            let loc = await Location.getCurrentPositionAsync({});
+            const coords = {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              address: 'Current Location',
+            };
+            setCurrentLocation(coords);
+            setPickupLocation(coords);
+            setRegion({
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            });
+          }}
+        >
+          <Ionicons name="locate" size={20} color={Colors.primary} />
+        </TouchableOpacity>
+        {/* Where to? Card Overlay */}
+        <View style={styles.whereToCard}>
+          <Text style={styles.whereToTitle}>Where to?</Text>
+          <TouchableOpacity style={styles.whereToRow} activeOpacity={0.7}>
+            <View style={[styles.dot, { backgroundColor: 'green' }]} />
+            <Text style={styles.whereToText}>Current Location</Text>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.whereToRow}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('DropLocationSelector')}
+          >
+            <View style={[styles.dot, { backgroundColor: 'red' }]} />
+            <Text style={styles.whereToText}>
+              {dropLocation ? dropLocation.name : 'Where are you going?'}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color="#aaa" style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
         </View>
-
+      </View>
+    </SafeAreaView>
         <View style={styles.mapFullScreen}>
           <MapView
             style={StyleSheet.absoluteFill}
@@ -491,5 +547,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+  },
+  whereToCard: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 24,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  whereToTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  whereToRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 14,
+  },
+  whereToText: {
+    fontSize: 16,
+    color: Colors.text,
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.gray200,
+    marginVertical: 4,
+    borderRadius: 1,
   },
 });
